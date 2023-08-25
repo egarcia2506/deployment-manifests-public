@@ -1,0 +1,18 @@
+# ServiceAccount referenced on 'serviceAccountRef' needs to be created before with a valid IAM Role
+---
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: aws-parameter-store
+  namespace: development
+spec:
+  provider:
+    aws:
+      service: ParameterStore
+      region: us-east-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: eso-dev-sa
+---
+

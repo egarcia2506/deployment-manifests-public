@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.referenceId }}-deploy
+  namespace: {{ .Values.environment }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.referenceId }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.referenceId }}
+    spec:
+      containers:
+        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          name: {{ .Values.referenceId }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          volumeMounts:
+          {{- range $i, $secrets := .Values.secrets }}
+            - name: secret-volume-{{$i}}
+              mountPath: {{ $secrets.mountPath | quote }}
+              subPath: {{ $secrets.secretKey }}
+              readOnly: true
+          {{ end }}
+      volumes:
+      {{- range $i, $secrets := .Values.secrets }}
+        - name: secret-volume-{{$i}}
+          secret:
+            secretName: {{ $secrets.secretName }}
+            items:
+              - key: {{ $secrets.secretKey }}
+                path: {{ $secrets.secretKey }}
+      {{ end }}

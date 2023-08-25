@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.referenceId }}-svc
+  namespace: {{ .Values.environment }}
+spec:
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: {{ .Values.service.protocol }}
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Values.referenceId }}

@@ -1,0 +1,113 @@
+# Default values for api-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+referenceId: api
+
+environment: development
+
+domain: development-plus.com
+
+replicaCount: 1
+
+# TODO: Update image
+image:
+  repository: 504600454656.dkr.ecr.us-east-1.amazonaws.com/api
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v20230816_204746"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  protocol: TCP
+  port: 80
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: backend
+    alb.ingress.kubernetes.io/group.order: '10' # TODO: How to manage this value from a central file?
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:504600454656:certificate/8ae3696e-d3bb-429f-be85-4257298e5def
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/healthcheck-path: /api_gov/test
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '10'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '8'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/uhealthy-threshold-count: '2'
+  hosts: # TODO: replace values with previously defined referenceId and domain (tpl?)
+    - host: api.development-plus.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: api
+              port:
+                number: 80
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+secrets:
+  - secretName: api.config.ini
+    secretKey: config.ini
+    remoteSecretKey: /development/api/config.ini
+    remoteSecretVersion: "7"
+    mountPath: "/var/www/api.govplus.loc/config/config.ini"
